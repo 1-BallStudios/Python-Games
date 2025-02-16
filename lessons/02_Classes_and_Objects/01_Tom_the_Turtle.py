@@ -3,7 +3,7 @@
 We really miss the turtle module from Python's standard library. It was a great
 way to introduce programming, so let's make something similar in PyGame, using
 objects. 
-
+TOM THE TUR-TLE, DOES NOTH-ING!
 """
 import math
 
