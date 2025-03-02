@@ -10,12 +10,15 @@ understandable, and makes it easier to add more complex features to the game.
 import pygame
 from dataclasses import dataclass
 
+pygame.init()
 
 class Colors:
     """Constants for Colors"""
     WHITE = (255, 255, 255)
     BLACK = (0, 0, 0)
     RED = (255, 0, 0)
+    #TESTING COLOR
+    GREEN = (0,255,0)
     PLAYER_COLOR = (0, 0, 255)
     BACKGROUND_COLOR = (255, 255, 255)
 
@@ -35,6 +38,7 @@ class GameSettings:
     player_jump_velocity: float = 15
     frame_rate: int = 15
 
+font = pygame.font.Font(None, 36)
 
 class Game:
     """Main object for the top level of the game. Holds the main loop and other
@@ -48,7 +52,9 @@ class Game:
         self.running = True
 
         self.screen = pygame.display.set_mode((self.settings.width, self.settings.height))
-        self.clock = pygame.time.Clock
+        self.clock = pygame.time.Clock()
+
+
 
     def run(self):
         """Main game loop"""
@@ -75,7 +81,7 @@ class Player:
     def __init__(self, game: Game):
         self.game = game
         settings = self.game.settings
-
+        self.thrust = pygame.Vector2(0,-8)
         self.width = settings.player_width
         self.height = settings.player_height
     
@@ -131,19 +137,20 @@ class Player:
         """Check if the player is at the right of the screen"""
         return self.pos.x >= self.game.settings.width - self.width
     
-    # Updates
-    def calc_gravity():
-        v = pygame.math.Vector2(3, 4)
+    def vec_to_center(self, pos):
+        v2c = pygame.Vector2((250,250) - pos)
+        return v2c
 
-        # Calculate the magnitude (r) of the vector
+    def calc_gravity(self, pos):
+        v = self.vec_to_center(pos)
         r = v.length()
-
-        # Avoid division by zero by checking if r is non-zero
         if r != 0:
             # Scale the vector by 1 / r^2
-            self.gravity = v * (1 / r**2)
+            gravity = (v * (1 / r**2)) * 10
         else:
-            self.gravity = pygame.math.Vector2(0, 0)  # Handle zero-length vector if necessary
+            gravity = pygame.math.Vector2(0, 0)  # Handle zero-length vector if necessary
+
+        return gravity
 
     def update(self):
         """Update player position, continuously jumping"""
@@ -153,9 +160,10 @@ class Player:
         
     def update_v(self):
         """Update the player's velocity based on gravity and bounce on edges"""
+        self.gravity = self.calc_gravity(self.pos)
          
-        self.vel.x = self.vel.x * 0.99
-        self.vel.y = self.vel.y * 0.99
+        self.vel.x = self.vel.x * 0.97
+        self.vel.y = self.vel.y * 0.97
          
         self.vel += self.gravity  # Add gravity to the velocity
 
@@ -196,12 +204,24 @@ class Player:
 
     def update_input(self):
         keys = pygame.key.get_pressed()
-        thrust = pygame.Vector2(0,-4)
+        if keys[pygame.K_UP]:
+            self.thrust.y = self.thrust.y - 5
+        if keys[pygame.K_DOWN]:
+            self.thrust.y = self.thrust.y + 5
+        if keys[pygame.K_RIGHT]:
+            self.thrust.x = self.thrust.x + 5
+        if keys[pygame.K_LEFT]:
+            self.thrust.x = self.thrust.x - 5
         if keys[pygame.K_SPACE] and self.at_bottom():
-            self.vel = self.vel + thrust
+            self.vel = self.vel + self.thrust
 
     def draw(self, screen):
         pygame.draw.rect(screen, Colors.PLAYER_COLOR, (self.pos.x, self.pos.y, self.width, self.height))
+        end_position = self.pos + (10,10) + (self.thrust * 3)
+        pygame.draw.line(screen, Colors.RED, self.pos + (10, 10), end_position, 3)
+        gravity_text = str(self.gravity)
+        gravity_render = font.render(gravity_text, True, Colors.BLACK)
+        screen.blit(gravity_render, (10, self.game.settings.height - 480))
 
 
 settings = GameSettings()
