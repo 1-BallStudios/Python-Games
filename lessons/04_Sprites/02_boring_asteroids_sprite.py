@@ -1,6 +1,8 @@
 import pygame
 import math
+from pathlib import Path
 
+assets = Path(__file__).parent / "images"
 
 class Settings:
     """Class to store game configuration."""
@@ -33,6 +35,7 @@ class Spaceship(pygame.sprite.Sprite):
         self.original_image = self.create_spaceship_image()
 
         self.velocity = pygame.Vector2(0, 0)
+        self.pos = pygame.Vector2(400,400)
 
         # For Sprites, the image and rect attributes are part of the Sprite class
         # and are important. The image is the surface that will be drawn on the screen
@@ -93,19 +96,41 @@ class Spaceship(pygame.sprite.Sprite):
         if keys[pygame.K_RIGHT]:
             self.angle += 5
 
+        if keys[pygame.K_UP]:
+            self.velocity = pygame.Vector2(0, -2).rotate(self.angle)
+
+        self.velocity = self.velocity * 0.99
+
         if keys[pygame.K_SPACE] and self.ready_to_shoot():
             self.fire_projectile()
 
         self.image = pygame.transform.rotate(self.original_image, -self.angle)
 
+        self.pos += self.velocity
+        if self.pos.x < 0:
+            self.pos.x = 800
+        if self.pos.x > 800:
+            self.pos.x = 0
+        if self.pos.y < 0:
+            self.pos.y = 800
+        if self.pos.y > 800:
+            self.pos.y = 0
         # Reassigning the rect because the image has changed.
         self.rect = self.image.get_rect(center=self.rect.center)
         
-        self.rect.center += self.velocity
+        self.rect.center = self.pos
+        
 
         # Dont forget this part! If you don't call the Sprite update method, the
         # sprite will not be drawn
+    
+
         super().update()
+
+class AlienSpaceship(Spaceship):
+    def create_spaceship_image(self):
+        """Creates the spaceship shape as a surface."""
+        return pygame.image.load(assets/'alien1.gif')
 
     # WAIT! Where is the draw method? We don't need to define it because the
     # Sprite class already has a draw method that will draw the image on the
@@ -217,7 +242,7 @@ if __name__ == "__main__":
 
     game = Game(settings)
 
-    spaceship = Spaceship(
+    spaceship = AlienSpaceship(
         settings, position=(settings.width // 2, settings.height // 2)
     )
 
