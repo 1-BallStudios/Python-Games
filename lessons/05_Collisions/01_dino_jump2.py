@@ -31,7 +31,7 @@ WHITE = (255, 255, 255)
 FPS = 60
 
 # Player attributes
-PLAYER_SIZE = 25
+PLAYER_SIZE = 20
 
 player_speed = 5
 
@@ -57,7 +57,7 @@ class Obstacle(pygame.sprite.Sprite):
         self.image = pygame.transform.scale(self.image, (OBSTACLE_WIDTH, OBSTACLE_HEIGHT))
         self.rect = self.image.get_rect(center=self.rect.center)
         self.rect.x = WIDTH
-        self.rect.y = HEIGHT - OBSTACLE_HEIGHT - 10
+        self.rect.y = (random.randint(0,14)*20)
 
         self.explosion = pygame.image.load(images_dir / "explosion1.gif")
 
@@ -88,13 +88,13 @@ class Player(pygame.sprite.Sprite):
         self.rect.x = 50
         self.rect.y = HEIGHT - PLAYER_SIZE - 10
         self.speed = 0
-        self.isjumping = 0
 
     def update(self):
+        global Score
         keys = pygame.key.get_pressed()
-        if keys[pygame.K_SPACE] and self.isjumping == 0: 
-            self.speed = 12
-            self.isjumping = 1
+        if keys[pygame.K_SPACE]: 
+            self.speed = 4  
+
 
 
         # Keep the player on screen
@@ -116,14 +116,7 @@ player_group = pygame.sprite.GroupSingle(player)
 
 # Add obstacles periodically
 def add_obstacle(obstacles):
-    # random.random() returns a random float between 0 and 1, so a value
-    # of 0.25 means that there is a 25% chance of adding an obstacle. Since
-    # add_obstacle() is called every 100ms, this means that on average, an
-    # obstacle will be added every 400ms.
-    # The combination of the randomness and the time allows for random
-    # obstacles, but not too close together. 
-    
-    if random.random() < 0.4:
+    if random.random() < 0.95:
         obstacle = Obstacle()
         obstacles.add(obstacle)
         return 1
