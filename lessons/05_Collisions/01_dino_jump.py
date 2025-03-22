@@ -100,7 +100,7 @@ class Player(pygame.sprite.Sprite):
         # Keep the player on screen
         self.speed -= 1
         self.rect.y -= self.speed
-
+ 
 
         if self.rect.top < 0:
             self.rect.top = 0
