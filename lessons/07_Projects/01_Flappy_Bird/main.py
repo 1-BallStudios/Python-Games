@@ -1,5 +1,6 @@
 import pygame
 import random
+import math
 
 # Initialize Pygame
 pygame.init()
@@ -11,10 +12,13 @@ images = Path(__file__).parent / 'images'
 screen_width = 600
 screen_height = 600
 Score = 0
+game_over = False
 obs_count = 0
 WHITE = (255, 255, 255)
 BLACK = (0,0,0)
+RED = (255,0,0)
 font = pygame.font.SysFont(None, 72, False, False)
+font2 = pygame.font.SysFont(None, 120, False, False)
 screen = pygame.display.set_mode((screen_width, screen_height))
 pygame.display.set_caption('Flappy Bird')
 
@@ -59,6 +63,10 @@ class Bird(pygame.sprite.Sprite):
         self.speed -= 0.05
         self.rect.y -= self.speed
 
+    def reset(self):
+        self.speed = 0
+        self.rect.y = 300
+
 class Pipe(pygame.sprite.Sprite):
     def __init__(self, is_inverted, y):
         super().__init__()
@@ -72,13 +80,17 @@ class Pipe(pygame.sprite.Sprite):
         self.rect = self.image.get_rect(center=self.rect.center)
         self.rect.x = 600
         self.rect.y = y
+        self.inverted = is_inverted
 
     def update(self):
         global Score
-        self.rect.x -= 1
+        self.rect.x -= 2
         # Remove the obstacle if it goes off screen
+        if self.rect.right == 300:
+            if self.inverted == False:
+                Score += 1
+
         if self.rect.right < 0:
-            Score += 1
             self.kill()
 
 def add_pipe(pipes):
@@ -97,26 +109,48 @@ bird_group = pygame.sprite.GroupSingle(bird)
 clock = pygame.time.Clock()
 last_pipe_time = pygame.time.get_ticks()
 running = True
+game_over = False
 pipe_group = pygame.sprite.Group()
+game_over_time = 0
 while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
 
-    bird_group.update()
+    if game_over == False:
+        bird_group.update()
+
+    if game_over == False:
+        pipe_group.update()
     
-    if pygame.time.get_ticks() - last_pipe_time > 1000:
+    collider = pygame.sprite.spritecollide(bird, pipe_group, dokill=False)
+    if collider or bird.rect.y > 600:
+        if game_over == False:
+            game_over_time = pygame.time.get_ticks()
+        game_over = True
+        #game_over_countdown = 5 - math.floor((pygame.time.get_ticks() - game_over_time) / 1000)
+
+    if pygame.time.get_ticks() - last_pipe_time > 1000 and game_over == False:
         last_pipe_time = pygame.time.get_ticks()
         obs_count += add_pipe(pipe_group)
-    
-    pipe_group.update()
+    keys = pygame.key.get_pressed()
+    if keys[pygame.K_r] and game_over == True:
+        Score = 0
+        bird.reset()
+        game_over = False
+        pipe_group = pygame.sprite.Group()
+        
 
     screen.blit(background,(0,0))
     bird_group.draw(screen)
     pipe_group.draw(screen)
     score_text = font.render(f"{Score}", True, BLACK)
+    game_over_text = font2.render("GAME OVER", True, RED)
+    game_over_text2 = font.render("Press R to Try Again", True, BLACK)
     screen.blit(score_text, ((300 - (((len(str(Score)) - 1) / 2) * 36)), 10))
-
+    if game_over == True:
+        screen.blit(game_over_text, (60, 100))
+        screen.blit(game_over_text2, (60, 300 ))
 
     # Update the display
     pygame.display.flip()
