@@ -14,7 +14,10 @@ screen_height = 600
 bulletcount = 0
 enemycount = 0
 last_bullet_time = 0
+lemt = 0
+Score = 0
 WHITE = (255,255,255)
+RED = (255,0,0)
 bullet_group = pygame.sprite.Group()
 enemy_group = pygame.sprite.Group()
 font = pygame.font.SysFont(None, 72, False, False)
@@ -116,19 +119,29 @@ class Enemy(pygame.sprite.Sprite):
         self.rect = self.image.get_rect(center=self.rect.center)
         self.rect.x = x
         self.rect.y = y
-        self.speed = 0
+        self.speed = 0.5
+        self.lemt = 0
 
     def update(self):
+        global Score
+        if True:
+            self.rect.x += self.speed
+        if self.rect.x >= 550 or self.rect.x <= 0:
+            self.speed = self.speed * -1
+            self.rect.y += 20
+        self.lemt = pygame.time.get_ticks()
         collider2 = pygame.sprite.spritecollide(self, bullet_group, dokill=False)
         if collider2:
+            Score += 100
             self.kill()
-
+        
 clock = pygame.time.Clock()
 running = True
+game_over = False
 background = make_tiled_bg(screen, images/"space.png")
 
 x = 30
-y = 30
+y = 80
 for i in range(3):
     for i in range(7):
         enemycount += add_enemy(enemy_group, x, y)
@@ -145,10 +158,24 @@ while running:
     enemy_group.update()
     bullet_group.update()
 
+    keys = pygame.key.get_pressed()
+    if keys[pygame.K_r] and game_over == True:
+        Score = 0
+        game_over = False
+        bullet_group = pygame.sprite.Group()
+        enemy_group = pygame.sprite.Group()
+
     screen.blit(background,(0,0))
     player_group.draw(screen)
     bullet_group.draw(screen)
     enemy_group.draw(screen)
+    score_text = font.render(f"{Score}", True, WHITE)
+    game_over_text = font2.render("GAME OVER", True, RED)
+    game_over_text2 = font.render("Press R to Try Again", True, WHITE)
+    screen.blit(score_text, ((300 - (((len(str(Score)) - 1) / 2) * 36)), 10))
+    if game_over == True:
+        screen.blit(game_over_text, (60, 100))
+        screen.blit(game_over_text2, (60, 300 ))
 
     # Update the display
     pygame.display.flip()
