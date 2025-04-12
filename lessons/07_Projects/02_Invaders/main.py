@@ -16,8 +16,14 @@ enemycount = 0
 last_bullet_time = 0
 lemt = 0
 Score = 0
+Level = 1
+furthest_enemy_pos = 510
+direction = 1
 WHITE = (255,255,255)
 RED = (255,0,0)
+GREEN = (0,255,0)
+YELLOW = (255,255,0)
+ORANGE = (255,128,0)
 bullet_group = pygame.sprite.Group()
 enemy_group = pygame.sprite.Group()
 font = pygame.font.SysFont(None, 72, False, False)
@@ -50,8 +56,8 @@ def add_bullet(bullets, x):
     bullets.add(bullet) 
     return 1
 
-def add_enemy(enemies, x, y):
-    enemy = Enemy(x, y)
+def add_enemy(enemies, x, y, id):
+    enemy = Enemy(x, y, id)
     enemies.add(enemy) 
     return 1
 
@@ -106,10 +112,9 @@ class Bullet(pygame.sprite.Sprite):
         if self.rect.y < 0:
             bulletcount -= 1
             self.kill()
-        
 
 class Enemy(pygame.sprite.Sprite):
-    def __init__(self, x, y):
+    def __init__(self, x, y, ID):
         super().__init__()
         self.image = pygame.Surface((50,40))
         self.rect = self.image.get_rect()
@@ -119,35 +124,75 @@ class Enemy(pygame.sprite.Sprite):
         self.rect = self.image.get_rect(center=self.rect.center)
         self.rect.x = x
         self.rect.y = y
-        self.speed = 0.5
+        self.ID = ID
+        self.speed = 2
         self.lemt = 0
 
     def update(self):
-        global Score
-        if True:
-            self.rect.x += self.speed
-        if self.rect.x >= 550 or self.rect.x <= 0:
-            self.speed = self.speed * -1
-            self.rect.y += 20
+        global Score, bulletcount, game_over
         self.lemt = pygame.time.get_ticks()
         collider2 = pygame.sprite.spritecollide(self, bullet_group, dokill=False)
         if collider2:
             Score += 100
             self.kill()
+            collider2[0].kill()
+            bulletcount -= 1
+        collider3 = pygame.sprite.spritecollide(self, player_group, dokill=False)
+        if collider3:
+            game_over = True
+
+    def move(self):
+        global furthest_enemy_pos, direction
+
+        self.rect.x += self.speed
+
+    def cfd(self):
+        global furthest_enemy_pos, direction
+
+        if furthest_enemy_pos >= 550 or furthest_enemy_pos <= 480:
+            self.rect.y += 20
+            self.speed = self.speed * -1
+            self.rect.x += self.speed * 3
+  
+            
         
 clock = pygame.time.Clock()
 running = True
 game_over = False
 background = make_tiled_bg(screen, images/"space.png")
 
+lmt = 0
 x = 30
 y = 80
+id = 1
 for i in range(3):
     for i in range(7):
-        enemycount += add_enemy(enemy_group, x, y)
+        enemycount += add_enemy(enemy_group, x, y, id)
         x += 80
+        id += 1
     x = 30
     y += 60
+
+while pygame.time.get_ticks() < 1000:
+    count_text = font2.render("3", True, YELLOW)
+    screen.blit(background,(0,0))
+    screen.blit(count_text, (300, 300))
+    pygame.display.flip()
+while pygame.time.get_ticks() < 2000:
+    count_text = font2.render("2", True, ORANGE)
+    screen.blit(background,(0,0))
+    screen.blit(count_text, (300, 300))
+    pygame.display.flip()
+while pygame.time.get_ticks() < 3000:
+    count_text = font2.render("1", True, RED)
+    screen.blit(background,(0,0))
+    screen.blit(count_text, (300, 300))
+    pygame.display.flip()
+while pygame.time.get_ticks() < 4000:
+    count_text = font2.render("GO!", True, GREEN)
+    screen.blit(background,(0,0))
+    screen.blit(count_text, (250, 300))
+    pygame.display.flip()
 
 while running:
     for event in pygame.event.get():
@@ -158,12 +203,36 @@ while running:
     enemy_group.update()
     bullet_group.update()
 
+    if pygame.time.get_ticks() > lmt + 500:
+        lmt = pygame.time.get_ticks()
+        for e in enemy_group:
+            e.move()
+            e.cfd()
+        furthest_enemy_pos += direction * 2
+        if furthest_enemy_pos >= 550 or furthest_enemy_pos <= 480:
+            direction = direction * -1
+
     keys = pygame.key.get_pressed()
-    if keys[pygame.K_r] and game_over == True:
-        Score = 0
+    if (keys[pygame.K_r] and game_over == True) or (Score % 2100 == 0 and Score > 0):
+        if game_over == True:
+            Score = 0
+        else:
+            Level += 1
         game_over = False
         bullet_group = pygame.sprite.Group()
         enemy_group = pygame.sprite.Group()
+        furthest_enemy_pos = 510
+        x = 30
+        y = 80
+        id = 1
+        for i in range(3):
+            for i in range(7):
+                enemycount += add_enemy(enemy_group, x, y, id)
+                x += 80
+                id += 1
+            x = 30
+            y += 60
+
 
     screen.blit(background,(0,0))
     player_group.draw(screen)
@@ -175,7 +244,7 @@ while running:
     screen.blit(score_text, ((300 - (((len(str(Score)) - 1) / 2) * 36)), 10))
     if game_over == True:
         screen.blit(game_over_text, (60, 100))
-        screen.blit(game_over_text2, (60, 300 ))
+        screen.blit(game_over_text2, (60, 300))
 
     # Update the display
     pygame.display.flip()
