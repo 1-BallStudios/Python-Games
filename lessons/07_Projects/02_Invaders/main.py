@@ -17,6 +17,8 @@ last_bullet_time = 0
 lemt = 0
 Score = 0
 Level = 1
+msbm = 500
+nl = False
 furthest_enemy_pos = 510
 direction = 1
 WHITE = (255,255,255)
@@ -129,7 +131,7 @@ class Enemy(pygame.sprite.Sprite):
         self.lemt = 0
 
     def update(self):
-        global Score, bulletcount, game_over
+        global Score, bulletcount, game_over, nl, Level
         self.lemt = pygame.time.get_ticks()
         collider2 = pygame.sprite.spritecollide(self, bullet_group, dokill=False)
         if collider2:
@@ -137,6 +139,7 @@ class Enemy(pygame.sprite.Sprite):
             self.kill()
             collider2[0].kill()
             bulletcount -= 1
+            nl = True
         collider3 = pygame.sprite.spritecollide(self, player_group, dokill=False)
         if collider3:
             game_over = True
@@ -176,22 +179,22 @@ for i in range(3):
 while pygame.time.get_ticks() < 1000:
     count_text = font2.render("3", True, YELLOW)
     screen.blit(background,(0,0))
-    screen.blit(count_text, (300, 300))
+    screen.blit(count_text, (264, 264))
     pygame.display.flip()
 while pygame.time.get_ticks() < 2000:
     count_text = font2.render("2", True, ORANGE)
     screen.blit(background,(0,0))
-    screen.blit(count_text, (300, 300))
+    screen.blit(count_text, (264, 264))
     pygame.display.flip()
 while pygame.time.get_ticks() < 3000:
     count_text = font2.render("1", True, RED)
     screen.blit(background,(0,0))
-    screen.blit(count_text, (300, 300))
+    screen.blit(count_text, (264, 264))
     pygame.display.flip()
 while pygame.time.get_ticks() < 4000:
     count_text = font2.render("GO!", True, GREEN)
     screen.blit(background,(0,0))
-    screen.blit(count_text, (250, 300))
+    screen.blit(count_text, (264, 264))
     pygame.display.flip()
 
 while running:
@@ -202,8 +205,12 @@ while running:
     player_group.update()
     enemy_group.update()
     bullet_group.update()
-
-    if pygame.time.get_ticks() > lmt + 500:
+    
+    if 500 - ((Level-1) * 25) > 50:
+        msbm = 500 - ((Level-1) * 25)
+    else:
+        msbm = 50
+    if pygame.time.get_ticks() > lmt + msbm:
         lmt = pygame.time.get_ticks()
         for e in enemy_group:
             e.move()
@@ -213,12 +220,13 @@ while running:
             direction = direction * -1
 
     keys = pygame.key.get_pressed()
-    if (keys[pygame.K_r] and game_over == True) or (Score % 2100 == 0 and Score > 0):
+    if (keys[pygame.K_r] and game_over == True) or (Score % 2100 == 0 and Score > 0 and nl == True):
         if game_over == True:
             Score = 0
         else:
             Level += 1
         game_over = False
+        nl = False
         bullet_group = pygame.sprite.Group()
         enemy_group = pygame.sprite.Group()
         furthest_enemy_pos = 510
@@ -238,10 +246,11 @@ while running:
     player_group.draw(screen)
     bullet_group.draw(screen)
     enemy_group.draw(screen)
-    score_text = font.render(f"{Score}", True, WHITE)
+    score_text = font.render(f"Score: {Score} Level: {Level}", True, WHITE)
+    scoretext2 = f"Score: {Score} Level: {Level}"
     game_over_text = font2.render("GAME OVER", True, RED)
     game_over_text2 = font.render("Press R to Try Again", True, WHITE)
-    screen.blit(score_text, ((300 - (((len(str(Score)) - 1) / 2) * 36)), 10))
+    screen.blit(score_text, ((300 - (((len(scoretext2) - 6) / 2) * 36)), 10))
     if game_over == True:
         screen.blit(game_over_text, (60, 100))
         screen.blit(game_over_text2, (60, 300))
