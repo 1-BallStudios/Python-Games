@@ -12,7 +12,14 @@ images = Path(__file__).parent / 'images'
 screen_width = 600
 screen_height = 600
 lmt = 0
-font = pygame.font.SysFont(None, 72, False, False)
+Score = 99
+Level = 1
+Lives = 3
+MaxScore = 99
+last_car_time = 0
+BLACK = (0,0,0)
+RED = (255,0,0)
+font = pygame.font.SysFont(None, 50, False, False)
 font2 = pygame.font.SysFont(None, 120, False, False)
 screen = pygame.display.set_mode((screen_width, screen_height))
 pygame.display.set_caption('Frogger')
@@ -40,14 +47,14 @@ def make_tiled_bg(screen, bg_file):
 class Player(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__()
-        self.image = pygame.Surface((40,48))
+        self.image = pygame.Surface((32,32))
         self.rect = self.image.get_rect()
         self.rocket = pygame.image.load(images/"frog.png")
         self.image = self.rocket
-        self.image = pygame.transform.scale(self.image, (40,48))
+        self.image = pygame.transform.scale(self.image, (32,32))
         self.rect = self.image.get_rect(center=self.rect.center)
         self.rect.x = 300
-        self.rect.y = 500
+        self.rect.y = 520
         self.vX = 0
         self.vY = 0
     
@@ -75,22 +82,105 @@ class Player(pygame.sprite.Sprite):
         self.rect.x += self.vX
         self.rect.y += self.vY
 
+    def reset(self):
+        self.rect.x = 300
+        self.rect.y = 520
+        self.vX = 0
+        self.vY = 0
+
 player = Player()
 player_group = pygame.sprite.GroupSingle(player)
+
+class Car(pygame.sprite.Sprite):
+    def __init__(self, y):
+        super().__init__()
+        self.image = pygame.Surface((100,70))
+        self.rect = self.image.get_rect()
+        self.car = pygame.image.load(images/"carLeft.png")
+        self.image = self.car
+        self.image = pygame.transform.scale(self.image, (100,70))
+        self.rect = self.image.get_rect(center=self.rect.center)
+        self.rect.x = 600
+        self.rect.y = y
+
+    def update(self):
+        global Level
+        self.rect.x -= (2 + (Level / 4))
+        if self.rect.right < 0:
+            self.kill()
+        
+
+def add_car(cars):
+    car_y = 150 + (random.randint(0,4) * 70)
+    car = Car(car_y)
+    cars.add(car)
+    return 1
 
 clock = pygame.time.Clock()
 running = True
 game_over = False
+obs_count = 0
+car_group = pygame.sprite.Group()
 background = make_tiled_bg(screen, images/"frogger_road_bg.png")
 while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
     
-    player_group.update()
+    collider = pygame.sprite.spritecollide(player, car_group, dokill=False)
+    if collider:
+        if Lives > 0:
+            Lives -= 1
+        if Lives < 1:
+            game_over = True
+        else:
+            game_over = False
+            player.reset()
+            car_group = pygame.sprite.Group()
+            Score = MaxScore
+            
+
+    if game_over == False:
+        player_group.update()
+        car_group.update()
+
+    if player.rect.y <= 100:
+        Level += 1
+        MaxScore = Score + 99
+        Score += 99
+        
+        player.reset()
+        car_group = pygame.sprite.Group()
+
+    if pygame.time.get_ticks() - last_car_time > 1000 and game_over == False:
+        last_car_time = pygame.time.get_ticks()
+        obs_count += add_car(car_group)
+        if Score > MaxScore - 99:
+            Score -= 1
+    keys = pygame.key.get_pressed()
+    if keys[pygame.K_r] and game_over == True:
+        game_over = False
+        player.reset()
+        car_group = pygame.sprite.Group()
+        Score = 99
+        MaxScore = 99
+        Level = 1
+        Lives = 3
 
     screen.blit(background,(0,0))
     player_group.draw(screen)
+    car_group.draw(screen)
+    score_text = font.render(f"Score: {Score} / {MaxScore}", True, BLACK)
+    lives_text = font.render(f"Lives: {Lives}", True, BLACK)
+    level_text = font.render(f"Level {Level}", True, BLACK)
+    game_over_text = font2.render("GAME OVER", True, RED)
+    game_over_text2 = font.render("Press R to Try Again", True, BLACK)
+    screen.blit(score_text, (10, 10))
+    screen.blit(lives_text, (310, 10))
+    screen.blit(level_text, (470, 10))
+    if game_over == True:
+        screen.blit(game_over_text, (60, 100))
+        screen.blit(game_over_text2, (60, 300 ))
 
     # Update the display
     pygame.display.flip()
