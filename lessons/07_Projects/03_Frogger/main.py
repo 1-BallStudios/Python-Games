@@ -48,10 +48,10 @@ class Player(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__()
         self.image = pygame.Surface((32,32))
-        self.rect = self.image.get_rect()
         self.rocket = pygame.image.load(images/"frog.png")
         self.image = self.rocket
         self.image = pygame.transform.scale(self.image, (32,32))
+        self.rect = self.image.get_rect()
         self.rect = self.image.get_rect(center=self.rect.center)
         self.rect.x = 300
         self.rect.y = 520
@@ -95,10 +95,11 @@ class Car(pygame.sprite.Sprite):
     def __init__(self, y):
         super().__init__()
         self.image = pygame.Surface((100,70))
-        self.rect = self.image.get_rect()
         self.car = pygame.image.load(images/"carLeft.png")
         self.image = self.car
-        self.image = pygame.transform.scale(self.image, (100,70))
+        self.image = pygame.transform.scale(self.image, (100,40))
+
+        self.rect = self.image.get_rect()
         self.rect = self.image.get_rect(center=self.rect.center)
         self.rect.x = 600
         self.rect.y = y
