@@ -14,6 +14,8 @@ class Settings:
     shoot_delay = 250
     BLACK = (0,0,0)
     RED = (255,0,0)
+    YELLOW = (255,255,0)
+    GREEN = (0,255,0)
     WHITE = (255,255,255)
     screen = pygame.display.set_mode((screen_width, screen_height))
     font = pygame.font.SysFont(None, 50, False, False)
@@ -27,7 +29,7 @@ class Player(pygame.sprite.Sprite):
         super().__init__()
         self.original_image = self.create_spaceship_image()
         self.velocity = pygame.Vector2(0, 0)
-        self.pos = pygame.Vector2(300,300)
+        self.pos = pygame.Vector2(300,100)
         self.image = self.original_image.copy() 
         self.rect = self.image.get_rect(center=position)
         self.last_shot = pygame.time.get_ticks()
@@ -45,6 +47,7 @@ class Player(pygame.sprite.Sprite):
         return image
 
     def update(self):
+        self.velocity.y+=0.005
         global fuel
         keys = pygame.key.get_pressed()
 
@@ -55,22 +58,15 @@ class Player(pygame.sprite.Sprite):
             self.angle += 5
 
         if keys[pygame.K_UP]:
-            self.velocity = pygame.Vector2(0, -2).rotate(self.angle)
-            fuel -= 0.5
+            if fuel > 0:
+                self.velocity = pygame.Vector2(0, -2).rotate(self.angle)
+                fuel -= 0.5
 
         self.velocity = self.velocity * 0.99
 
         self.image = pygame.transform.rotate(self.original_image, -self.angle)
 
         self.pos += self.velocity
-        if self.pos.x < 0:
-            self.pos.x = 800
-        if self.pos.x > 800:
-            self.pos.x = 0
-        if self.pos.y < 0:
-            self.pos.y = 800
-        if self.pos.y > 800:
-            self.pos.y = 0
         self.rect = self.image.get_rect(center=self.rect.center)
         
         self.rect.center = self.pos
@@ -102,9 +98,30 @@ class Game:
         self.all_sprites.draw(Settings.screen)
         points2 = [
             (10, 50),  # top point
-            ((10+fuel*2), 50),  # left side point
-            ((10+fuel*2), 100),
-            (10, 100),  # right side point
+            (50, 50),  # left side point
+            (50, 75),
+            (10, 75),  # right side point
+        ]
+        pygame.draw.polygon(Settings.screen, Settings.RED, points2)
+        points2 = [
+            (50, 50),  # top point
+            (100, 50),  # left side point
+            (100, 75),
+            (50, 75),  # right side point
+        ]
+        pygame.draw.polygon(Settings.screen, Settings.YELLOW, points2)
+        points2 = [
+            (100, 50),  # top point
+            (210, 50),  # left side point
+            (210, 75),
+            (100, 75),  # right side point
+        ]
+        pygame.draw.polygon(Settings.screen, Settings.GREEN, points2)
+        points2 = [
+            ((fuel*2+10), 40),  # top point
+            ((fuel*2+20), 40),  # left side point
+            ((fuel*2+20), 85),
+            ((fuel*2+10), 85),  # right side point
         ]
         pygame.draw.polygon(Settings.screen, Settings.WHITE, points2)
         fuel_text = Settings.font.render(f"FUEL", True, Settings.WHITE)
@@ -125,7 +142,7 @@ if __name__ == "__main__":
 
     game = Game(Settings)
     spaceship = Player(
-        position=(300,300)
+        position=(300,100)
     )
 
     game.add(spaceship)
