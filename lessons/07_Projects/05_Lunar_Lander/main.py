@@ -11,7 +11,6 @@ class Settings:
     screen_width = 600
     screen_height = 600
     fps = 60
-    shoot_delay = 250
     BLACK = (0,0,0)
     RED = (255,0,0)
     YELLOW = (255,255,0)
@@ -23,6 +22,23 @@ class Settings:
     pygame.display.set_caption('Asteroids')
 
 fuel = 100
+score = 0
+
+def groundify(x):
+    if x <= 100:
+        return 480
+    elif x <= 200:
+        return 480 + 0.4 * (x - 100)
+    elif x <= 400:
+        return 520
+    elif x <= 440:
+        return 520 - 3 * (x - 400)
+    elif x <= 480:
+        return 400 + 3 * (x - 440)
+    elif x <= 540:
+        return 520
+    else:
+        return 520 - (1/3) * (x - 520)
 
 class Player(pygame.sprite.Sprite):
     def __init__(self, position):
@@ -47,7 +63,7 @@ class Player(pygame.sprite.Sprite):
         return image
 
     def update(self):
-        self.velocity.y+=0.005
+        self.velocity.y+=0.01
         global fuel
         keys = pygame.key.get_pressed()
 
@@ -66,12 +82,11 @@ class Player(pygame.sprite.Sprite):
 
         self.image = pygame.transform.rotate(self.original_image, -self.angle)
 
-        self.pos += self.velocity
-        self.rect = self.image.get_rect(center=self.rect.center)
-        
-        self.rect.center = self.pos
-    
-        super().update()
+        self.rect.x += self.velocity[0]
+        self.rect.y += self.velocity[1]
+        ground_y = groundify(self.pos.x)
+        if self.rect.bottom >= ground_y:
+            self.rect.bottom = ground_y
 
 class Game:
     def __init__(self, settings):
@@ -94,6 +109,7 @@ class Game:
         self.all_sprites.update()
 
     def draw(self):
+        global score
         Settings.screen.fill(Settings.BLACK)
         self.all_sprites.draw(Settings.screen)
         points2 = [
@@ -124,8 +140,23 @@ class Game:
             ((fuel*2+10), 85),  # right side point
         ]
         pygame.draw.polygon(Settings.screen, Settings.WHITE, points2)
+        points3 = [
+            (-10, 600),
+            (-10, 480),
+            (100, 480),
+            (200, 520),
+            (400, 520),
+            (440, 400),
+            (480, 520),
+            (540, 520),
+            (600, 500),
+            (600, 600),
+        ]
+        pygame.draw.polygon(Settings.screen, Settings.WHITE, points3, 3)
         fuel_text = Settings.font.render(f"FUEL", True, Settings.WHITE)
         Settings.screen.blit(fuel_text, (10, 10))
+        fuel_text = Settings.font.render(f"{score}", True, Settings.GREEN)
+        Settings.screen.blit(fuel_text, (300, 10))
 
         pygame.display.flip()
 
