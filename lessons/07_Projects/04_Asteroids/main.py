@@ -53,7 +53,7 @@ class Player(pygame.sprite.Sprite):
             
 
     def fire_projectile(self):
-        global proj(group)
+        global proj_group
         new_projectile = Projectile(
             position=self.rect.center,
             angle=self.angle,

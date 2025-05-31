@@ -23,6 +23,7 @@ class Settings:
 
 fuel = 100
 score = 0
+pv = 0
 
 def groundify(x):
     if x <= 100:
@@ -39,6 +40,22 @@ def groundify(x):
         return 520
     else:
         return 520 - (1/3) * (x - 520)
+    
+def scoring(x):
+    if x <= 100:
+        return 100
+    elif x <= 200:
+        return 300
+    elif x <= 400:
+        return 100
+    elif x <= 440:
+        return 500
+    elif x <= 480:
+        return 500
+    elif x <= 540:
+        return 100
+    else:
+        return 200
 
 class Player(pygame.sprite.Sprite):
     def __init__(self, position):
@@ -64,7 +81,7 @@ class Player(pygame.sprite.Sprite):
 
     def update(self):
         self.velocity.y+=0.01
-        global fuel
+        global fuel, pv, score
         keys = pygame.key.get_pressed()
 
         if keys[pygame.K_LEFT]:
@@ -84,9 +101,19 @@ class Player(pygame.sprite.Sprite):
 
         self.rect.x += self.velocity[0]
         self.rect.y += self.velocity[1]
+        pv = self.velocity[1]
         ground_y = groundify(self.pos.x)
         if self.rect.bottom >= ground_y:
-            self.rect.bottom = ground_y
+            if self.velocity[1] < 0.97:
+                self.velocity[0] = 0
+                self.velocity[1] = 0
+                self.rect.bottom = ground_y
+                score += scoring(self.pos.x)
+                self.rect.x = 300
+                self.rect.y = 100
+            else:
+                pass
+                self.CRASH()
 
 class Game:
     def __init__(self, settings):
@@ -155,6 +182,13 @@ class Game:
         pygame.draw.polygon(Settings.screen, Settings.WHITE, points3, 3)
         fuel_text = Settings.font.render(f"FUEL", True, Settings.WHITE)
         Settings.screen.blit(fuel_text, (10, 10))
+        fuel_text = Settings.font.render(f"VELOCITY", True, Settings.WHITE)
+        Settings.screen.blit(fuel_text, (410, 10))
+        if pv < 0.97:
+            fuel_text = Settings.font.render(f"{pv}", True, Settings.GREEN)
+        else:
+            fuel_text = Settings.font.render(f"{pv}", True, Settings.RED)
+        Settings.screen.blit(fuel_text, (400, 50))
         fuel_text = Settings.font.render(f"{score}", True, Settings.GREEN)
         Settings.screen.blit(fuel_text, (300, 10))
 
