@@ -69,7 +69,7 @@ class Player(pygame.sprite.Sprite):
     def fire_projectile(self):
         global proj_group
         new_projectile = Projectile(
-            position=self.rect.center,
+            position=self.rect.center + pygame.Vector2(0,-60).rotate(self.angle),
             angle=self.angle,
             velocity=5,
         )
@@ -108,6 +108,7 @@ class Player(pygame.sprite.Sprite):
         self.image = pygame.transform.rotate(self.original_image, -self.angle)
 
         self.pos += self.velocity
+        
         self.rect = self.image.get_rect(center=self.rect.center)
         
         self.rect.center = self.pos
@@ -129,10 +130,9 @@ class Projectile(pygame.sprite.Sprite):
         self.rect = self.image.get_rect(center=position)
 
         self.velocity = pygame.Vector2(0, -1).rotate(angle) * velocity
-        print(self.rect)
 
     def create_spaceship_image(self, position):
-        image = pygame.Surface( (position[0], position[1]),pygame.SRCALPHA)
+        image = pygame.Surface( (20, 20),pygame.SRCALPHA)
         points2 = [
             (10, 10),  # top point
             (-10, 10),  # left side point
@@ -145,6 +145,10 @@ class Projectile(pygame.sprite.Sprite):
     
     def update(self):
         self.rect.center += self.velocity
+        if self.rect.x > 700 or self.rect.x < 0 or self.rect.y > 700 or self.rect.y < 0:
+            self.kill()
+
+        super().update()
         
 proj_group = pygame.sprite.Group()
 class Game:
@@ -170,6 +174,7 @@ class Game:
     def draw(self):
         Settings.screen.fill(Settings.BLACK)
         self.all_sprites.draw(Settings.screen)
+        proj_group.draw(Settings.screen)
         fuel_text = Settings.font.render(f"{p1_hp}", True, Settings.RED)
         Settings.screen.blit(fuel_text, (10, 10))
         fuel_text = Settings.font.render(f"{p2_hp}", True, Settings.GREEN)
